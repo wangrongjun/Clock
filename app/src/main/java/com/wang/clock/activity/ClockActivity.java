@@ -1,125 +1,135 @@
 package com.wang.clock.activity;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
-import android.view.KeyEvent;
 import android.view.View;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
-import android.widget.CompoundButton.OnCheckedChangeListener;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.TimePicker;
-import android.widget.TimePicker.OnTimeChangedListener;
-import android.widget.Toast;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.wang.clock.R;
-import com.wang.clock.receiver.Clock;
+import com.wang.clock.entity.Clock;
+import com.wang.clock.util.ClockDb;
+import com.wang.clock.util.ClockManager;
+import com.wang.clock.util.P;
 
-public class ClockActivity extends Activity implements OnTimeChangedListener {
+import butterknife.Bind;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 
-    private TimePicker timePicker;
-    private TextView tvIsOpen;
+/**
+ * by wangrongjun on 2017/2/3.
+ */
+public class ClockActivity extends Activity {
 
-    private boolean isTimeChanged = false;
+    private enum Mode {
+        CREATE,
+        UPDATE
+    }
+
+    @Bind(R.id.time_picker)
+    TimePicker timePicker;
+    @Bind(R.id.tv_repeat_mode)
+    TextView tvRepeatMode;
+    @Bind(R.id.tv_music_path)
+    TextView tvMusicPath;
+    @Bind(R.id.et_content)
+    EditText etContent;
+
+    private Mode mode;
+    /**
+     * 若ClockActivity启动后clock不为空，则为修改闹钟，否则为添加闹钟。
+     */
+    private Clock clock;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_clock);
-
-        initView();
+        ButterKnife.bind(this);
+        initData();
+        updateView();
     }
 
-    private void initView() {
-
-        timePicker = (TimePicker) findViewById(R.id.tp);
-        if (Clock.isOpen()) {
-            timePicker.setCurrentHour(Clock.clockHour());
-            timePicker.setCurrentMinute(Clock.clockMinute());
+    private void initData() {
+        try {
+            clock = new Gson().fromJson(getIntent().getStringExtra("clockJson"), Clock.class);
+        } catch (JsonSyntaxException e) {
+            e.printStackTrace();
         }
-        timePicker.setOnTimeChangedListener(this);
+        mode = clock == null ? Mode.CREATE : Mode.UPDATE;
 
-        tvIsOpen = (TextView) findViewById(R.id.tv_isOpen);
-        String s = "";
-        if (Clock.isOpen()) {
-            s = "闹钟已开启   " + (Clock.repeat() ? "每天重复" : "响一次");
-        } else {
-            s = "闹钟已关闭";
+        if (mode == Mode.CREATE) {//添加闹钟
+            clock = new Clock(
+                    timePicker.getCurrentHour(),
+                    timePicker.getCurrentMinute(),
+                    P.getDefaultMusicPath(),
+                    "",
+                    Clock.State.OPEN,
+                    Clock.RepeatMode.ONCE
+            );
         }
-        tvIsOpen.setText(s);
     }
 
-    @Override
-    public void onTimeChanged(TimePicker view, int hourOfDay, int minute) {
-        isTimeChanged = true;
+    private void updateView() {
+        timePicker.setCurrentHour(clock.getHour());
+        timePicker.setCurrentMinute(clock.getMinute());
+        tvRepeatMode.setText(clock.getRepeatMode() == Clock.RepeatMode.ONCE ? "一次" : "每天");
+        tvMusicPath.setText(clock.getMusicPath());
+        etContent.setText(clock.getContent());
     }
 
-    public void onClickStop(View v) {
-        Clock.stop();
+    public static void start(Activity activity, Clock clock) {
+        Intent intent = new Intent(activity, ClockActivity.class);
+        intent.putExtra("clockJson", new Gson().toJson(clock));
+        activity.startActivityForResult(intent, 0);
     }
 
-    public void onClickTest(View v) {
-        String s = Clock.alarm() ? "测试中" : "文件不存在";
-        Toast.makeText(this, s, Toast.LENGTH_SHORT).show();
-    }
-
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        switch (keyCode) {
-            case KeyEvent.KEYCODE_BACK:
-                if (isTimeChanged) {
-                    showClockConfirmDialog();
-                } else {
-                    finish();
-                }
-                break;
-
-        }
-        return false;
-    }
-
-    private boolean repeat = false;
-
-    private void showClockConfirmDialog() {
-        CheckBox checkBox = new CheckBox(this);
-        checkBox.setText("重复");
-        checkBox.setChecked(Clock.repeat());
-        checkBox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView,
-                                         boolean isChecked) {
-                repeat = isChecked;
-
-            }
-        });
-
-        new AlertDialog.Builder(this).setTitle("提示").setMessage("开启闹钟？")
-                .setNegativeButton("关闭", new AlertDialog.OnClickListener() {
-
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        Clock.cancel(getApplicationContext());
-                        Toast.makeText(ClockActivity.this, "闹钟已关闭",
-                                Toast.LENGTH_SHORT).show();
-                        finish();
-                    }
-                }).setPositiveButton("开启", new AlertDialog.OnClickListener() {
-
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                int clockHour = timePicker.getCurrentHour();
-                int clockMinute = timePicker.getCurrentMinute();
-                Clock.setAlarm(getApplicationContext(), clockHour,
-                        clockMinute, repeat);
-                System.out.println("repeat: " + repeat);
-                Toast.makeText(ClockActivity.this, "闹钟已开启",
-                        Toast.LENGTH_SHORT).show();
+    @OnClick({R.id.btn_cancel, R.id.btn_confirm, R.id.btn_repeat_mode, R.id.btn_music})
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.btn_cancel:
                 finish();
-            }
-        }).setView(checkBox).show();
+                break;
+            case R.id.btn_confirm:
+                confirm();
+                break;
+            case R.id.btn_repeat_mode:
+                if (clock.getRepeatMode() == Clock.RepeatMode.ONCE) {
+                    clock.setRepeatMode(Clock.RepeatMode.EVERY_DAY);
+                } else {
+                    clock.setRepeatMode(Clock.RepeatMode.ONCE);
+                }
+                updateView();
+                break;
+            case R.id.btn_music:
+                break;
+        }
+    }
+
+    private void confirm() {
+        ClockDb clockDb = new ClockDb(this);
+        ClockManager manager = new ClockManager();
+        int id;
+        if (mode == Mode.CREATE) {
+            id = clockDb.addClock(clock);
+        } else {
+            clockDb.updateClock(clock);
+            id = clock.getClockId();
+        }/*
+        manager.setAlarm(
+                this,
+                id,
+                timePicker.getCurrentHour(),
+                timePicker.getCurrentMinute(),
+                clock.getRepeatMode() == Clock.RepeatMode.EVERY_DAY
+        );*/
+
+        finish();
+        setResult(0);
     }
 
 }
