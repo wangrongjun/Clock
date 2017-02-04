@@ -11,15 +11,13 @@ public class MusicPlayer {
 
     private static MediaPlayer mediaPlayer;
 
+    public static boolean isPlaying() {
+        return mediaPlayer != null && mediaPlayer.isPlaying();
+    }
+
     public synchronized static void play(String musicPath) {
 
-        if (mediaPlayer != null) {
-            if (mediaPlayer.isPlaying()) {
-                mediaPlayer.stop();
-            }
-            mediaPlayer.release();
-            mediaPlayer = null;
-        }
+        stop();
 
         mediaPlayer = new MediaPlayer();
         try {

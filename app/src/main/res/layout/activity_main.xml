@@ -54,9 +54,28 @@
         android:layout_height="1px"
         android:background="@color/dark_gray" />
 
-    <ListView
-        android:id="@+id/lv_clock"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent">
+
+        <ListView
+            android:id="@+id/lv_clock"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <TextView
+            android:id="@+id/btn_stop_music"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_gravity="center_horizontal|bottom"
+            android:layout_marginBottom="20dp"
+            android:background="@drawable/btn_stop_music_selector"
+            android:gravity="center"
+            android:text="停止"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+    </FrameLayout>
 
 </LinearLayout>

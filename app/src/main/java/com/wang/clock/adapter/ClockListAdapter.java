@@ -11,6 +11,7 @@ import android.widget.TextView;
 import com.wang.clock.R;
 import com.wang.clock.entity.Clock;
 import com.wang.clock.util.ClockDb;
+import com.wang.clock.util.ClockManager;
 
 import java.util.List;
 
@@ -28,6 +29,10 @@ public class ClockListAdapter extends BaseAdapter {
     public ClockListAdapter(Context context, List<Clock> clockList) {
         this.context = context;
         this.clockList = clockList;
+    }
+
+    public List<Clock> getClockList() {
+        return clockList;
     }
 
     @Override
@@ -61,7 +66,12 @@ public class ClockListAdapter extends BaseAdapter {
 
     private void updateView(final ViewHolder holder, int position) {
         final Clock clock = clockList.get(position);
-        holder.tvTime.setText(clock.getHour() + ":" + clock.getMinute());
+
+        int hour = clock.getHour();
+        int minute = clock.getMinute();
+        String hourStr = hour > 9 ? (hour + "") : ("0" + hour);
+        String minuteStr = minute > 9 ? (minute + "") : ("0" + minute);
+        holder.tvTime.setText(hourStr + ":" + minuteStr);
         holder.tvRepeatMode.setText(clock.getRepeatMode() == Clock.RepeatMode.ONCE ? "一次" : "每天");
         holder.tvContent.setText(clock.getContent());
         boolean isOpen = clock.getState() == Clock.State.OPEN;
@@ -73,12 +83,14 @@ public class ClockListAdapter extends BaseAdapter {
             public void onClick(View v) {
                 boolean isOpen = clock.getState() == Clock.State.OPEN;
                 ClockDb db = new ClockDb(context);
+                ClockManager manager = new ClockManager();
                 if (isOpen) {
                     clock.setState(Clock.State.CLOSE);
-//                    holder.btnClockState.setImageResource(R.mipmap.ic_clock_open);
+                    manager.cancelAlarm(context, clock.getClockId());
                 } else {
                     clock.setState(Clock.State.OPEN);
-//                    holder.btnClockState.setImageResource(R.mipmap.ic_clock_open);
+                    manager.setAlarm(context, clock.getClockId(), clock.getHour(),
+                            clock.getMinute(), clock.getRepeatMode() == Clock.RepeatMode.EVERY_DAY);
                 }
                 db.updateClock(clock);
                 db.close();

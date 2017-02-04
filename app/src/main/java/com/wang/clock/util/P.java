@@ -12,9 +12,8 @@ public class P {
     public static Context context;
 
     public static String getDefaultMusicPath() {
-        return "sdcard/a.mp3";
-//        SharedPreferences pref = context.getSharedPreferences(prefName, Context.MODE_PRIVATE);
-//        return pref.getString("defaultMusicPath", "");
+        SharedPreferences pref = context.getSharedPreferences(prefName, Context.MODE_PRIVATE);
+        return pref.getString("defaultMusicPath", "");
     }
 
     public static void setDefaultMusicPath(String defaultMusicPath) {

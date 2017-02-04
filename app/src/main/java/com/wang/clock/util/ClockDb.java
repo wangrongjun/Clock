@@ -37,6 +37,31 @@ public class ClockDb extends SQLiteOpenHelper {
         db.execSQL(createTableSql);
     }
 
+    public Clock getClockById(int clockId) {
+        try {
+            String sql = DaoUtil.queryByIdSql(Clock.class, clockId + "");
+            SQLiteDatabase db = getReadableDatabase();
+            Cursor cursor = db.rawQuery(sql, null);
+            List<Clock> clockList = SqliteUtil.getResult(Clock.class, cursor);
+            if (clockList.size() > 0) {
+                return clockList.get(0);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public void closeClock(int clockId) {
+        try {
+            String sql = DaoUtil.updateSql(Clock.class, clockId + "", "state",
+                    Clock.toState(Clock.State.CLOSE) + "");
+            execute(sql);
+        } catch (PrimaryKeyNotFoundException | FieldNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
     public List<Clock> getClockList() {
         try {
             String sql = DaoUtil.queryAllSql(Clock.class);
@@ -70,9 +95,13 @@ public class ClockDb extends SQLiteOpenHelper {
         return clockId;
     }
 
-    public void deleteClock(int clockId) throws PrimaryKeyNotFoundException {
-        String sql = DaoUtil.deleteByIdSql(Clock.class, clockId + "");
-        execute(sql);
+    public void deleteClock(int clockId) {
+        try {
+            String sql = DaoUtil.deleteByIdSql(Clock.class, clockId + "");
+            execute(sql);
+        } catch (PrimaryKeyNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     public void deleteAllClock() throws FieldNotFoundException {

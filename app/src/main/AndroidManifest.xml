@@ -2,13 +2,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.wang.clock">
 
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:name=".main.MyApplication"
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/ic_clock_open"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
@@ -21,10 +22,8 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".activity.DbTestActivity" />
         <activity android:name=".activity.ClockActivity" />
-
-        <!--<service android:name="com.wang.clock.service.TimeUpdateService" />-->
+        <activity android:name=".activity.ChooseMusicActivity" />
 
         <receiver
             android:name=".receiver.ClockReceiver"

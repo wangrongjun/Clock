@@ -3,45 +3,29 @@ package com.wang.clock.receiver;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.media.MediaPlayer;
+
+import com.wang.clock.entity.Clock;
+import com.wang.clock.util.ClockDb;
+import com.wang.clock.util.MusicPlayer;
+import com.wang.java_util.DebugUtil;
 
 public class ClockReceiver extends BroadcastReceiver {
 
     public static final String ACTION = "com.wang.intent.ClockReceiver";
 
-    private static boolean isOpen = false;
-    private static boolean repeat = false;
-    private static int clockHour;
-    private static int clockMinute;
-
-    private static MediaPlayer mediaPlayer = null;
-
-    public static boolean isOpen() {
-        return isOpen;
-    }
-
-    public static boolean repeat() {
-        return repeat;
-    }
-
-    public static int clockHour() {
-        return clockHour;
-    }
-
-    public static int clockMinute() {
-        return clockMinute;
-    }
-
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
-        System.out.println(action);
+        DebugUtil.println(action);
         if (action.equals(ACTION)) {
-//            ClockReceiver.alarm();
-            if (!repeat) {
-                isOpen = false;
-            }
+            int clockId = intent.getIntExtra("clockId", 0);
+            ClockDb db = new ClockDb(context);
+            Clock clock = db.getClockById(clockId);
+            MusicPlayer.play(clock.getMusicPath());
+            db.closeClock(clockId);
+            DebugUtil.printlnEntity(clock);
+            db.close();
         }
-
     }
+
 }

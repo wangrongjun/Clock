@@ -15,6 +15,7 @@ import com.wang.clock.entity.Clock;
 import com.wang.clock.util.ClockDb;
 import com.wang.clock.util.ClockManager;
 import com.wang.clock.util.P;
+import com.wang.java_util.TextUtil;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -78,7 +79,7 @@ public class ClockActivity extends Activity {
         timePicker.setCurrentHour(clock.getHour());
         timePicker.setCurrentMinute(clock.getMinute());
         tvRepeatMode.setText(clock.getRepeatMode() == Clock.RepeatMode.ONCE ? "一次" : "每天");
-        tvMusicPath.setText(clock.getMusicPath());
+        tvMusicPath.setText(TextUtil.getTextAfterLastSlash(clock.getMusicPath()));
         etContent.setText(clock.getContent());
     }
 
@@ -106,11 +107,28 @@ public class ClockActivity extends Activity {
                 updateView();
                 break;
             case R.id.btn_music:
+                startActivityForResult(new Intent(this, ChooseMusicActivity.class), 0);
                 break;
         }
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (data != null) {
+            String musicPath = data.getStringExtra(ChooseMusicActivity.RESULT_KEY);
+            tvMusicPath.setText(musicPath);
+            clock.setMusicPath(musicPath);
+            updateView();
+        }
+    }
+
     private void confirm() {
+        clock.setContent(etContent.getText().toString());
+        clock.setState(Clock.State.OPEN);
+        clock.setHour(timePicker.getCurrentHour());
+        clock.setMinute(timePicker.getCurrentMinute());
+
         ClockDb clockDb = new ClockDb(this);
         ClockManager manager = new ClockManager();
         int id;
@@ -119,17 +137,17 @@ public class ClockActivity extends Activity {
         } else {
             clockDb.updateClock(clock);
             id = clock.getClockId();
-        }/*
+        }
         manager.setAlarm(
                 this,
                 id,
                 timePicker.getCurrentHour(),
                 timePicker.getCurrentMinute(),
                 clock.getRepeatMode() == Clock.RepeatMode.EVERY_DAY
-        );*/
+        );
 
+        setResult(MainActivity.RESULT_CODE_Clock_Activity);
         finish();
-        setResult(0);
     }
 
 }

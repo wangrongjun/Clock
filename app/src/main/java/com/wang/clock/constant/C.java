@@ -12,4 +12,6 @@ public class C {
     public static final String musicDir = Environment.getExternalStorageDirectory() +
             File.separator + "clockDir" + File.separator;
 
+    public static final String defaulrMusicName = "clock.mid";
+
 }

@@ -109,14 +109,14 @@ public class Clock {
         return State.CLOSE;
     }
 
-    public static State toState(int state) {
+    public static int toState(State state) {
         switch (state) {
-            case 0:
-                return State.CLOSE;
-            case 1:
-                return State.OPEN;
+            case CLOSE:
+                return 0;
+            case OPEN:
+                return 1;
         }
-        return State.CLOSE;
+        return 0;
     }
 
     public void setState(State state) {

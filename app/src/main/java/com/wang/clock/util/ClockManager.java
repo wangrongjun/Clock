@@ -23,6 +23,7 @@ public class ClockManager {
                 .getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(context, ClockReceiver.class);
         intent.setAction(ClockReceiver.ACTION);
+        intent.putExtra("clockId", clockId);
         //这里的clockId用来区别不同的闹钟
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 context, clockId, intent, PendingIntent.FLAG_UPDATE_CURRENT);
